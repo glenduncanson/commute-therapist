@@ -26,11 +26,12 @@ export function useSpeak({ lang = "en-GB", rate = 0.95, pitch = 1, onEnd }: UseS
     utterance.rate = rate;
     utterance.pitch = pitch;
 
-    // Target Siri British Voice 3 (female Lancashire accent) with fallback chain
+    // Use user-saved voice preference, then fall back to best available
     const voices = window.speechSynthesis.getVoices();
     const enVoices = voices.filter((v) => v.lang.startsWith("en"));
+    const savedName = localStorage.getItem("ct_voice_name");
     const preferred =
-      enVoices.find((v) => v.name === "Siri Voice 3") ||
+      (savedName ? enVoices.find((v) => v.name === savedName) : null) ||
       enVoices.find((v) => v.name.includes("Premium")) ||
       enVoices.find((v) => v.name.includes("Enhanced")) ||
       enVoices.find((v) => v.name.includes("Neural")) ||
