@@ -1,0 +1,63 @@
+import { useCallback, useRef, useState } from "react";
+
+export type SpeakState = "idle" | "speaking" | "unsupported";
+
+interface UseSpeakOptions {
+  lang?: string;
+  rate?: number;   // 0.1–10, default 1
+  pitch?: number;  // 0–2, default 1
+  onEnd?: () => void; // called when utterance finishes
+}
+
+export function useSpeak({ lang = "en-GB", rate = 0.95, pitch = 1, onEnd }: UseSpeakOptions = {}) {
+  const [state, setState] = useState<SpeakState>(() =>
+    typeof window !== "undefined" && "speechSynthesis" in window ? "idle" : "unsupported"
+  );
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const speak = useCallback((text: string) => {
+    if (!("speechSynthesis" in window)) return;
+
+    // Cancel anything currently playing
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+
+    // Pick a good voice if available — prefer a natural-sounding one
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(
+      (v) =>
+        v.lang.startsWith("en") &&
+        (v.name.includes("Samantha") ||     // macOS/iOS
+          v.name.includes("Karen") ||        // macOS/iOS AU
+          v.name.includes("Daniel") ||       // macOS/iOS UK
+          v.name.includes("Moira") ||        // macOS IE
+          v.name.includes("Google") ||       // Chrome
+          v.name.includes("Natural") ||
+          v.name.includes("Neural") ||
+          v.name.includes("Premium"))
+    );
+    if (preferred) utterance.voice = preferred;
+
+    utterance.onstart = () => setState("speaking");
+    utterance.onend = () => {
+      setState("idle");
+      onEnd?.();
+    };
+    utterance.onerror = () => setState("idle");
+
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    setState("speaking");
+  }, [lang, rate, pitch, onEnd]);
+
+  const stop = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setState("idle");
+  }, []);
+
+  return { state, speak, stop };
+}

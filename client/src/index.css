@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Fonts ─────────────────────────────────────────────────────────────── */
+:root {
+  --font-display: 'Cabinet Grotesk', system-ui, sans-serif;
+  --font-body: 'Satoshi', system-ui, sans-serif;
+
+  /* ─── Type Scale ─────────────────────────────── */
+  --text-xs:   clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg:   clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --text-xl:   clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+
+  /* ─── Spacing ─────────────────────────────────── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ─── Light mode palette: deep slate/indigo calm ── */
+  --background:      240 12% 97%;
+  --foreground:      240 15% 12%;
+  --card:            0 0% 100%;
+  --card-foreground: 240 15% 12%;
+  --popover:         0 0% 100%;
+  --popover-foreground: 240 15% 12%;
+  --primary:         245 60% 40%;
+  --primary-foreground: 0 0% 100%;
+  --secondary:       240 10% 93%;
+  --secondary-foreground: 240 15% 25%;
+  --muted:           240 8% 92%;
+  --muted-foreground: 240 10% 52%;
+  --accent:          198 70% 45%;
+  --accent-foreground: 0 0% 100%;
+  --destructive:     0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border:          240 10% 88%;
+  --input:           240 10% 88%;
+  --ring:            245 60% 40%;
+  --radius: 0.75rem;
+
+  /* App-specific tokens */
+  --drive-bg:        245 55% 12%;
+  --drive-text:      240 30% 90%;
+  --session-accent:  162 55% 38%;
+  --emotion-warm:    28 90% 58%;
+}
+
+.dark {
+  --background:      240 15% 8%;
+  --foreground:      240 20% 90%;
+  --card:            240 14% 12%;
+  --card-foreground: 240 20% 90%;
+  --popover:         240 14% 12%;
+  --popover-foreground: 240 20% 90%;
+  --primary:         245 70% 65%;
+  --primary-foreground: 240 15% 8%;
+  --secondary:       240 12% 16%;
+  --secondary-foreground: 240 20% 75%;
+  --muted:           240 12% 16%;
+  --muted-foreground: 240 12% 55%;
+  --accent:          198 70% 55%;
+  --accent-foreground: 240 15% 8%;
+  --destructive:     0 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border:          240 12% 20%;
+  --input:           240 12% 20%;
+  --ring:            245 70% 65%;
+
+  --drive-bg:        245 40% 7%;
+  --drive-text:      240 25% 88%;
+  --session-accent:  162 60% 45%;
+  --emotion-warm:    28 85% 60%;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    line-height: 1.2;
+    font-weight: 700;
+  }
+}
+
+/* ─── Drive mode overlay ────────────────────────────────────────────────── */
+.drive-mode {
+  background: hsl(var(--drive-bg));
+  color: hsl(var(--drive-text));
+  min-height: 100dvh;
+}
+
+/* ─── Emotion intensity pill ────────────────────────────────────────────── */
+.emotion-badge {
+  background: hsl(var(--emotion-warm) / 0.15);
+  color: hsl(var(--emotion-warm));
+  border: 1px solid hsl(var(--emotion-warm) / 0.3);
+}
+
+/* ─── Tap targets (mobile) ──────────────────────────────────────────────── */
+.tap-target {
+  min-height: 52px;
+  min-width: 52px;
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.3s ease both;
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ─── Chat bubbles ──────────────────────────────────────────────────────── */
+.bubble-assistant {
+  background: hsl(var(--primary) / 0.1);
+  border: 1px solid hsl(var(--primary) / 0.2);
+  border-radius: 0 var(--radius) var(--radius) var(--radius);
+}
+.bubble-user {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: var(--radius) 0 var(--radius) var(--radius);
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 2px; }
