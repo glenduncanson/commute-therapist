@@ -7,7 +7,7 @@ import { useSpeech } from "@/hooks/use-speech";
 import { useSpeak } from "@/hooks/use-speak";
 import { getRecap } from "@/lib/db";
 import type { SessionRecord } from "@/lib/db";
-import { ChevronLeft, Mic, MicOff, Volume2, VolumeX, Square } from "lucide-react";
+import { ChevronLeft, Volume2, VolumeX, Square, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Message { role: "assistant" | "user"; content: string; }
@@ -33,7 +33,7 @@ export default function DriveMode() {
     onEnd: () => { if (!isEnding && voiceEnabled) startListening(); },
   });
 
-  const { state: speechState, start: startListening, stop: stopListening, toggle: toggleListening } = useSpeech({
+  const { state: speechState, start: startListening, stop: stopListening } = useSpeech({
     onResult: (t) => setLiveTranscript(t),
     onAutoSend: (t) => handleSendRef.current(t),
     autoSend: true, lang: "en-GB",
@@ -194,7 +194,7 @@ export default function DriveMode() {
       <div className="text-center pb-4 h-6" style={{ fontSize: "var(--text-xs)", color: "hsl(var(--accent))" }}>
         {isSpeaking && <span className="pulse-soft">Speaking…</span>}
         {isListening && <span className="pulse-soft">Listening — pause to send</span>}
-        {!isSpeaking && !isListening && started && !isEnding && <span className="opacity-40" style={{ color: "hsl(var(--drive-text))" }}>Tap mic to speak</span>}
+        {!isSpeaking && !isListening && started && !isEnding && <span className="pulse-soft">Ready — speak when ready</span>}
       </div>
 
       {!started ? (
@@ -214,18 +214,12 @@ export default function DriveMode() {
         </div>
       ) : (
         <div className="px-5 pb-10">
-          <div className="flex justify-center mb-5">
-            <button data-testid="btn-mic" onClick={() => { if (isSpeaking) { stopSpeaking(); startListening(); } else toggleListening(); }} disabled={micUnsupported} className="rounded-full flex items-center justify-center transition-all active:scale-95 relative" style={{ width: "80px", height: "80px", background: isListening ? "hsl(var(--accent))" : "hsl(var(--primary) / 0.25)" }}>
-              {isListening && <span className="absolute inset-0 rounded-full" style={{ background: "hsl(var(--accent) / 0.25)", animation: "ping 1.2s cubic-bezier(0,0,0.2,1) infinite" }} />}
-              {isListening ? <MicOff size={30} style={{ color: "white", position: "relative" }} /> : <Mic size={30} style={{ color: "hsl(var(--drive-text))", position: "relative" }} />}
-            </button>
-          </div>
           <div className="flex gap-3">
-            <button onClick={handleRepeat} disabled={!voiceEnabled || ttsUnsupported} className="tap-target flex-1 rounded-xl flex items-center justify-center gap-2 opacity-60 hover:opacity-80 disabled:opacity-20" style={{ border: "1px solid hsl(var(--drive-text) / 0.2)", color: "hsl(var(--drive-text))", fontSize: "var(--text-sm)" }}>
-              <Volume2 size={16} />Repeat
+            <button onClick={handleRepeat} disabled={!voiceEnabled || ttsUnsupported} data-testid="btn-repeat" className="tap-target flex-1 rounded-2xl py-5 flex items-center justify-center gap-2 disabled:opacity-20" style={{ background: "hsl(var(--primary) / 0.25)", border: "1px solid hsl(var(--drive-text) / 0.15)", color: "hsl(var(--drive-text))", fontSize: "var(--text-sm)" }}>
+              <RotateCcw size={18} />Repeat
             </button>
-            <button onClick={handleEnd} className="tap-target flex-1 rounded-xl flex items-center justify-center gap-2 opacity-60 hover:opacity-80" style={{ border: "1px solid hsl(var(--drive-text) / 0.2)", color: "hsl(var(--drive-text))", fontSize: "var(--text-sm)" }}>
-              <Square size={16} />End session
+            <button onClick={handleEnd} data-testid="btn-end" className="tap-target flex-1 rounded-2xl py-5 flex items-center justify-center gap-2" style={{ background: "hsl(var(--primary) / 0.25)", border: "1px solid hsl(var(--drive-text) / 0.15)", color: "hsl(var(--drive-text))", fontSize: "var(--text-sm)" }}>
+              <Square size={18} />End
             </button>
           </div>
         </div>
