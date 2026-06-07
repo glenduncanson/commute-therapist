@@ -26,18 +26,15 @@ export function useSpeak({ lang = "en-GB", rate = 0.95, pitch = 1, onEnd }: UseS
     utterance.rate = rate;
     utterance.pitch = pitch;
 
-    // Pick the best available voice — prefer iOS Siri Premium/Enhanced voices
+    // Target Siri British Voice 3 (female Lancashire accent) with fallback chain
     const voices = window.speechSynthesis.getVoices();
     const enVoices = voices.filter((v) => v.lang.startsWith("en"));
     const preferred =
+      enVoices.find((v) => v.name === "Siri Voice 3") ||
       enVoices.find((v) => v.name.includes("Premium")) ||
       enVoices.find((v) => v.name.includes("Enhanced")) ||
       enVoices.find((v) => v.name.includes("Neural")) ||
-      enVoices.find((v) => v.name.includes("Natural")) ||
       enVoices.find((v) => v.name.includes("Samantha")) ||
-      enVoices.find((v) => v.name.includes("Daniel")) ||  // iOS UK
-      enVoices.find((v) => v.name.includes("Karen")) ||   // iOS AU
-      enVoices.find((v) => v.name.includes("Google")) ||
       enVoices[0];
     if (preferred) utterance.voice = preferred;
 
