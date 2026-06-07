@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { apiRequest, API_BASE } from "@/lib/queryClient";
-import type { Session } from "@shared/schema";
+import { apiGetRecap, apiCreateSession } from "@/lib/queryClient";
+import type { SessionRecord } from "@/lib/db";
 import { Clock, Car, Zap, BookOpen, Settings, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RecapData {
-  last: Session | null;
+  last: SessionRecord | null;
   topTag: string | null;
-  unfinished: Session | null;
+  unfinished: SessionRecord | null;
 }
 
 function formatDate(ts: string) {
@@ -27,15 +27,12 @@ export default function Home() {
   const [, navigate] = useLocation();
 
   const { data: recap, isLoading } = useQuery<RecapData>({
-    queryKey: ["/api/sessions/recap"],
-    queryFn: async () => {
-      const r = await apiRequest("GET", "/api/sessions/recap");
-      return r.json();
-    },
+    queryKey: ["recap"],
+    queryFn: apiGetRecap,
   });
 
   async function startSession(mode: "drive" | "short") {
-    const session = await apiRequest("POST", "/api/sessions", {
+    const session = await apiCreateSession({
       timestamp: new Date().toISOString(),
       mode,
       tags: "[]",
@@ -43,15 +40,13 @@ export default function Home() {
       follow_up_status: "not_done",
       is_complete: false,
     });
-    const s: Session = await session.json();
-    navigate(`/${mode === "drive" ? "drive" : "session"}/${s.id}`);
+    navigate(`/${mode === "drive" ? "drive" : "session"}/${session.id}`);
   }
 
   const last = recap?.last;
 
   return (
     <div className="min-h-dvh bg-background flex flex-col px-5 pt-12 pb-10 max-w-md mx-auto fade-up">
-      {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-2 mb-3">
           <svg viewBox="0 0 32 32" fill="none" aria-label="CT logo" className="h-8 w-8">
@@ -60,7 +55,7 @@ export default function Home() {
             <path d="M16 6v4M16 22v4M6 16h4M22 16h4" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+        <h1 className="font-bold text-foreground" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)" }}>
           Commute Therapist
         </h1>
         <p className="text-muted-foreground" style={{ fontSize: "var(--text-sm)", marginTop: "var(--space-1)" }}>
@@ -68,25 +63,16 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Unfinished action nudge */}
       {recap?.unfinished?.next_action && !isLoading && (
-        <div
-          className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-6 flex gap-3 items-start fade-up"
-          data-testid="unfinished-nudge"
-        >
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-6 flex gap-3 items-start fade-up" data-testid="unfinished-nudge">
           <AlertCircle size={18} className="text-primary mt-0.5 shrink-0" />
           <div>
-            <p className="font-medium text-foreground" style={{ fontSize: "var(--text-sm)" }}>
-              Still open from last time
-            </p>
-            <p className="text-muted-foreground mt-0.5" style={{ fontSize: "var(--text-sm)" }}>
-              {recap.unfinished.next_action}
-            </p>
+            <p className="font-medium text-foreground" style={{ fontSize: "var(--text-sm)" }}>Still open from last time</p>
+            <p className="text-muted-foreground mt-0.5" style={{ fontSize: "var(--text-sm)" }}>{recap.unfinished.next_action}</p>
           </div>
         </div>
       )}
 
-      {/* Main actions */}
       <div className="space-y-3 mb-8">
         <button
           data-testid="btn-drive-mode"
@@ -98,12 +84,8 @@ export default function Home() {
             <Car size={22} className="text-primary-foreground" />
           </div>
           <div className="flex-1">
-            <div className="font-bold" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-base)" }}>
-              Drive mode
-            </div>
-            <div className="opacity-60 mt-0.5" style={{ fontSize: "var(--text-sm)" }}>
-One question at a time · safe in the car.
-            </div>
+            <div className="font-bold" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-base)" }}>Drive mode</div>
+            <div className="opacity-60 mt-0.5" style={{ fontSize: "var(--text-sm)" }}>One question at a time · safe in the car.</div>
           </div>
           <ChevronRight size={18} className="opacity-40" />
         </button>
@@ -117,18 +99,13 @@ One question at a time · safe in the car.
             <Zap size={22} className="text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-bold text-foreground" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-base)" }}>
-              Short session
-            </div>
-            <div className="text-muted-foreground mt-0.5" style={{ fontSize: "var(--text-sm)" }}>
-8–12 minutes. More depth, still focused.
-            </div>
+            <div className="font-bold text-foreground" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-base)" }}>Short session</div>
+            <div className="text-muted-foreground mt-0.5" style={{ fontSize: "var(--text-sm)" }}>8–12 minutes. More depth, still focused.</div>
           </div>
           <ChevronRight size={18} className="text-muted-foreground opacity-40" />
         </button>
       </div>
 
-      {/* Last session recap */}
       {last && (
         <div
           className="rounded-xl border border-border bg-card p-4 mb-8 cursor-pointer hover:border-primary/30 transition-colors"
@@ -139,11 +116,11 @@ One question at a time · safe in the car.
             <div className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: "var(--text-xs)" }}>
               <Clock size={13} />
               <span>{formatDate(last.timestamp)}</span>
-              <span className="capitalize px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{last.mode}</span>
+              <span className="capitalize px-1.5 py-0.5 rounded bg-muted">{last.mode}</span>
             </div>
             {last.emotion && (
               <span className="emotion-badge px-2 py-0.5 rounded-full" style={{ fontSize: "var(--text-xs)" }}>
-                {last.emotion} {last.emotion_intensity !== null ? `· ${last.emotion_intensity}/10` : ""}
+                {last.emotion}{last.emotion_intensity != null ? ` · ${last.emotion_intensity}/10` : ""}
               </span>
             )}
           </div>
@@ -151,32 +128,17 @@ One question at a time · safe in the car.
             {last.summary || last.situation || "Session recorded"}
           </p>
           {last.next_time_prompt && (
-            <p className="text-primary mt-2" style={{ fontSize: "var(--text-xs)" }}>
-              → {last.next_time_prompt}
-            </p>
+            <p className="text-primary mt-2" style={{ fontSize: "var(--text-xs)" }}>→ {last.next_time_prompt}</p>
           )}
         </div>
       )}
 
-      {/* Secondary nav */}
       <div className="mt-auto flex gap-3">
-        <Button
-          variant="ghost"
-          data-testid="nav-journal"
-          className="flex-1 gap-2 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/journal")}
-        >
-          <BookOpen size={17} />
-          Journal
+        <Button variant="ghost" data-testid="nav-journal" className="flex-1 gap-2 text-muted-foreground hover:text-foreground" onClick={() => navigate("/journal")}>
+          <BookOpen size={17} />Journal
         </Button>
-        <Button
-          variant="ghost"
-          data-testid="nav-settings"
-          className="flex-1 gap-2 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/settings")}
-        >
-          <Settings size={17} />
-          Settings
+        <Button variant="ghost" data-testid="nav-settings" className="flex-1 gap-2 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
+          <Settings size={17} />Settings
         </Button>
       </div>
     </div>

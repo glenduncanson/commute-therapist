@@ -1,35 +1,59 @@
+// PWA mode — all data is local IndexedDB, no server calls.
 import { QueryClient } from "@tanstack/react-query";
-
-// __PORT_5000__ is replaced at deploy time by deploy_website
-const PORT_PREFIX =
-  typeof window !== "undefined" && (window as any).__PORT_5000__
-    ? (window as any).__PORT_5000__
-    : "";
-
-export const API_BASE = PORT_PREFIX;
-
-export async function apiRequest(
-  method: string,
-  path: string,
-  body?: unknown
-): Promise<Response> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: body ? { "Content-Type": "application/json" } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${method} ${path} → ${res.status}: ${text}`);
-  }
-  return res;
-}
+import * as db from "./db";
+export type { SessionRecord } from "./db";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 1000 * 30,
-      retry: 1,
-    },
+    queries: { staleTime: 1000 * 30, retry: 1 },
   },
 });
+
+// ── Thin API shim — same call signatures as before ───────────────────────────
+// Pages call these instead of fetch(). All data stays on device.
+
+export async function apiGetSessions() {
+  return db.getAllSessions();
+}
+
+export async function apiGetSession(id: number) {
+  return db.getSession(id);
+}
+
+export async function apiCreateSession(data: Omit<import("./db").SessionRecord, "id">) {
+  return db.createSession(data);
+}
+
+export async function apiUpdateSession(id: number, data: Partial<import("./db").SessionRecord>) {
+  return db.updateSession(id, data);
+}
+
+export async function apiDeleteSession(id: number) {
+  return db.deleteSession(id);
+}
+
+export async function apiDeleteAllSessions() {
+  return db.deleteAllSessions();
+}
+
+export async function apiSearchSessions(query: string, tags: string[]) {
+  return db.searchSessions(query, tags);
+}
+
+export async function apiGetRecap() {
+  return db.getRecap();
+}
+
+export async function apiExportSessions() {
+  const sessions = await db.getAllSessions();
+  const blob = new Blob(
+    [JSON.stringify({ exported_at: new Date().toISOString(), sessions }, null, 2)],
+    { type: "application/json" }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "commute-therapist-export.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
